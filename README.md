@@ -11,4 +11,4 @@
 MIT
 
 ## Screen Shots
-![](https://github.com/thesoncriel/shutter-test/blob/master/screenshots/001.png)
+![](https://github.com/thesoncriel/shutter-test/blob/master/screenshots/001.jpg)
