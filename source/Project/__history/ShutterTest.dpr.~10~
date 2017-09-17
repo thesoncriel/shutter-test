@@ -1,0 +1,33 @@
+program ShutterTest;
+
+uses
+  ExceptionLog,
+  Forms,
+  Form_MainUnit in '..\form\Form_MainUnit.pas' {Form1},
+  Form_OperationDialogUnit in '..\Form\Form_OperationDialogUnit.pas' {TForm_OperationDialog},
+  Form_InputDialogUnit in '..\Form\Form_InputDialogUnit.pas' {Form_InputDialog},
+  Form_RecipeEditorUnit in '..\Form\Form_RecipeEditorUnit.pas' {Form_RecipeEditor},
+  Frame_ShutterViewUnit in '..\Frame\Frame_ShutterViewUnit.pas' {Frame_ShutterView: TFrame},
+  Frame_RecipeTableUnit in '..\Frame\Frame_RecipeTableUnit.pas' {Frame_RecipeTable: TFrame},
+  Frame_ShutterViewGroupUnit in '..\Frame\Frame_ShutterViewGroupUnit.pas' {Frame3: TFrame},
+  Frame_MainBottomUnit in '..\Frame\Frame_MainBottomUnit.pas' {Frame4: TFrame},
+  I7000 in '..\Driver\I7000.PAS',
+  Class_Driver_I7000 in '..\Driver\Class_Driver_I7000.pas',
+  Class_Part in '..\Class\Class_Part.pas',
+  Class_PartList in '..\Class\Class_PartList.pas',
+  Class_XmlReadWriter in '..\Class\Class_XmlReadWriter.pas',
+  Class_RecipeOperator in '..\Class\Class_RecipeOperator.pas',
+  Class_RecipeTable in '..\Class\Class_RecipeTable.pas',
+  Class_RecipeRow in '..\Class\Class_RecipeRow.pas';
+
+{$R *.res}
+
+begin
+  Application.Initialize;
+  Application.MainFormOnTaskbar := True;
+  Application.CreateForm(TForm1, Form1);
+  Application.CreateForm(TTForm_OperationDialog, TForm_OperationDialog);
+  Application.CreateForm(TForm_InputDialog, Form_InputDialog);
+  Application.CreateForm(TForm_RecipeEditor, Form_RecipeEditor);
+  Application.Run;
+end.

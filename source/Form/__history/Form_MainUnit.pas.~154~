@@ -1,0 +1,248 @@
+unit Form_MainUnit;
+
+interface
+
+uses
+  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
+  Dialogs, ComCtrls, AdvListV, ExtCtrls, AdvSmoothButton, AdvSmoothLabel,
+  Frame_ShutterViewGroupUnit, Unit_Resources, Class_PartList, 
+  Class_RecipeOperator, Class_Driver_I7000, StdCtrls, Class_LogWriter, 
+  Frame_CaptureOptionUnit, Class_ImageCapture;
+
+type
+  TForm_Main = class(TForm)
+    Timer_ShutterState: TTimer;
+    Panel_Bottom: TPanel;
+    Panel_Background: TPanel;
+    Button_Start: TAdvSmoothButton;
+    Button_Stop: TAdvSmoothButton;
+    Label_Monitoring: TAdvSmoothLabel;
+    Edit_TotalCount: TEdit;
+    Label_TotalCount: TLabel;
+    Label_CurrTotal: TLabel;
+    Panel_ShutterGroup: TPanel;
+    Panel_VisionViewGroup: TPanel;
+    procedure Button_StartClick(Sender: TObject);
+    procedure Button_StopClick(Sender: TObject);
+    procedure Edit_TotalCountClick(Sender: TObject);
+    procedure FormClose(Sender: TObject; var Action: TCloseAction);
+    procedure FormShow(Sender: TObject);
+    procedure Timer_ShutterStateTimer(Sender: TObject);
+  private
+    FShutterGroup: TFrame_ShutterViewGroup;
+    FCaptureOpt: TFrame_CaptureOption;
+    FPartList: TPartList;
+    FRecipeOper: TRecipeOperator;
+    FDriver_I7000: TDriver_I7000;
+    FLogWriter: TLogWriter;
+    FImageCapture: TImageCapture;
+    procedure OnChangePartState(Sender: TObject; Index: Integer; operVal: Boolean);
+    { Private declarations }
+  protected
+    procedure OnAutoCaptureStart(Sender: TObject; rectHole: IRectangleHole);
+    procedure OnAutoCaptureStop(Sender: TObject);
+    procedure OnCaptureImage(Sender: TObject; rectHole: IRectangleHole);
+    procedure SetOptionBeforeAutoCapture(rectHole: IRectangleHole);
+  public
+    procedure OnAutoOperationEnd(Sender: TObject);
+    { Public declarations }
+  end;
+
+var
+  Form_Main: TForm_Main;
+
+implementation
+
+uses
+  Frame_ShutterViewUnit, Form_InputDialogUnit;
+
+{$R *.dfm}
+
+procedure TForm_Main.Button_StartClick(Sender: TObject);
+var
+  i: Integer;
+begin
+  FLogWriter.CreateNewLog( 'shutter' );
+  FLogWriter.AddToColumn( FPartList );
+  FRecipeOper.Clear;
+
+  for i := 0 to FShutterGroup.Count - 1 do
+  begin
+    FRecipeOper.Add( FShutterGroup.Items[ i ].GetRecipeData );
+  end;
+
+//  FImageCapture.SetInterval( FCaptureOpt.GetInterval );
+//  FImageCapture.SetStartDelay( FCaptureOpt.GetStartDelay );
+//  FImageCapture.SavePath := FCaptureOpt.GetSavePath;
+//  FImageCapture.TargetPart := FPartList.GetPartByName( FCaptureOpt.GetSelectedPart );
+//  FImageCapture.FullScreen := FCaptureOpt.IsFullScreen;
+//  FImageCapture.AutoCaptureStart( FCaptureOpt.GetRectHole );
+  SetOptionBeforeAutoCapture( FCaptureOpt.GetRectHole );
+
+  FrecipeOper.TotalCount := StrToInt( Edit_TotalCount.Text );
+  FRecipeOper.Infinity := true;
+  FRecipeOper.Start;
+  Label_Monitoring.Visible := true;
+end;
+
+procedure TForm_Main.Button_StopClick(Sender: TObject);
+var
+  i: Integer;
+begin
+  FImageCapture.AutoCaptureStop;
+  FRecipeOper.Stop;
+  Label_Monitoring.Visible := false;
+
+  for i := 0 to FPartList.Count - 1 do
+  begin
+    FpartList[ i ].SetPartAction( false );
+  end;
+end;
+
+procedure TForm_Main.Edit_TotalCountClick(Sender: TObject);
+begin
+  if Form_InputDialog.ShowModal <> mrCancel then
+  begin
+    Edit_TotalCount.Text := Form_InputDialog.GetValue;
+  end;
+end;
+
+procedure TForm_Main.FormClose(Sender: TObject; var Action: TCloseAction);
+begin
+  FShutterGroup.SaveAllRecipe;
+
+  FPartList.Free;
+  FDriver_I7000.Free;
+  FRecipeOper.Free;
+  FShutterGroup.Free;
+  FLogWriter.Free;
+  FCaptureOpt.Free;
+  FImageCapture.Free;
+end;
+
+procedure TForm_Main.FormShow(Sender: TObject);
+begin
+  InitRes;
+  FPartList := TPartList.Create;
+  FDriver_I7000 := TDriver_I7000.Create( nil );
+  FRecipeOper := TRecipeOperator.Create;
+  FShutterGroup := TFrame_ShutterViewGroup.Create( Panel_ShutterGroup );
+  FCaptureOpt := TFrame_CaptureOption.Create( Panel_VisionViewGroup );
+  FLogWriter := TLogWriter.Create( LOG_FOLDER );
+  FImageCapture := TImageCapture.Create;
+
+  FDriver_I7000.LoadConfigByIniFile( CONFIG_FILE );
+  FDriver_I7000.Open;
+  FPartList.CreatePartsByIniFile( CONFIG_FILE );
+  FPartList.SetDriverToAllParts( FDriver_I7000 );
+
+  FShutterGroup.CreateViewByPartList( FPartList );
+  FShutterGroup.LoadRecipeByIniFile( CONFIG_FILE );
+
+  FCaptureOpt.SetPartList( FPartList );
+  FImageCapture.TimerInterval := 1000;
+
+  FRecipeOper.OnOperation := OnChangePartState;
+  FRecipeOper.OnOperationEnd := OnAutoOperationEnd;
+  FShutterGroup.OnChangePartState := OnChangePartState;
+  FCaptureOpt.OnCaptureEvent := OnCaptureImage;
+end;
+
+procedure TForm_Main.OnAutoCaptureStart(Sender: TObject; rectHole:
+    IRectangleHole);
+begin
+  SetOptionBeforeAutoCapture( rectHole );
+end;
+
+procedure TForm_Main.OnAutoCaptureStop(Sender: TObject);
+begin
+  FImageCapture.AutoCaptureStop;
+end;
+
+procedure TForm_Main.OnAutoOperationEnd(Sender: TObject);
+begin
+  Button_StopClick( Sender );
+  ShowMessage( 'Auto Operation is End' );
+end;
+
+procedure TForm_Main.OnCaptureImage(Sender: TObject; rectHole: IRectangleHole);
+var
+  sDestFilePath: String;
+begin
+  FImageCapture.SavePath := FCaptureOpt.GetSavePath;
+  FImageCapture.FullScreen := FCaptureOpt.IsFullScreen;
+  sDestFilePath := FImageCapture.Capture( rectHole );
+
+  ShowMessage( 'Image Capture is Success.' + #13#10 + 'FilePath: ' + sDestFilePath );
+end;
+
+procedure TForm_Main.OnChangePartState(Sender: TObject; Index: Integer;
+  operVal: Boolean);
+begin
+  FPartList[ Index ].SetPartAction( operVal );
+//
+//  if  ( FRecipeOper.IsOperRun = true ) and
+//      ( FPartList[ Index ].Name = FImageCapture.TargetPartName ) then
+//  begin
+//    if ( operVal = true ) then
+//    begin
+//      FImageCapture.AutoCaptureRestart;
+//    end
+//    else
+//    begin
+//      FImageCapture.AutoCapturePause;
+//    end;
+//  end;
+end;
+
+procedure TForm_Main.SetOptionBeforeAutoCapture(rectHole: IRectangleHole);
+begin
+  FImageCapture.SetInterval( FCaptureOpt.GetInterval );
+  FImageCapture.SetStartDelay( FCaptureOpt.GetStartDelay );
+  FImageCapture.SavePath := FCaptureOpt.GetSavePath;
+  FImageCapture.TargetPart := FPartList.GetPartByName( FCaptureOpt.GetSelectedPart );
+  FImageCapture.FullScreen := FCaptureOpt.IsFullScreen;
+  FImageCapture.AutoCaptureStart( rectHole );
+end;
+
+procedure TForm_Main.Timer_ShutterStateTimer(Sender: TObject);
+var
+  i: Integer;
+  bState: Boolean;
+  sTimeOut: String;
+begin
+  //FImageCapture.AutoCapture;
+  
+  for i := 0 to FPartList.Count - 1 do
+  begin
+    bState := FPartList[ i ].GetPartState;
+    if FPartList[ i ].IsTimeOut = true then
+    begin
+      sTimeOut := sTimeOut + FPartList[ i ].Name + ' ';
+      FPartList[ i ].SetPartAction( bState );
+    end;
+    FShutterGroup.Items[ i ].SetState( bState );
+  end;
+
+
+
+  if sTimeOut <> '' then
+  begin
+    if FRecipeOper.IsOperRun = true then
+    begin
+      Button_StopClick( Sender );
+      sTimeOut := sTimeOut + #13#10 + 'Auto Test is Stopped.';
+    end;
+
+    ShowMessage( 'Comport Time out Error ! : ' + sTimeOut );
+    exit;
+  end;
+
+  if FRecipeOper.IsOperRun = true then
+  begin
+    FLogWriter.Write( FPartList );
+    Label_CurrTotal.Caption := IntToStr( FRecipeOper.GetCurrTotalCount );
+  end;
+end;
+
+end.

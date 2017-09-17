@@ -1,0 +1,296 @@
+unit Frame_RecipeTableUnit;
+
+interface
+
+uses
+  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms, 
+  Dialogs, ComCtrls, AdvListV, Class_XmlReadWriter, Form_InputDialogUnit, 
+  Form_OperationDialogUnit;
+
+const
+  XML_ROOT_NODE = 'shutterRecipe';
+type
+  TFrame_RecipeTable = class(TFrame)
+    ListView_RecipeTable: TAdvListView;
+    SaveDialog: TSaveDialog;
+    OpenDialog: TOpenDialog;
+    procedure ListView_RecipeTableLeftClickCell(Sender: TObject; iItem, iSubItem:
+        Integer);
+  private
+    FFilePath: String;
+    function GetEnabled: Boolean;
+    function GetFilePath: string;
+    procedure SetEnabled(const Value: Boolean);
+    { Private declarations }
+  protected
+    procedure SetColumns(strings: TStrings);
+    procedure SetRows(const xmlReader: TXMLReader);
+    function ShowBoolInputDialog(listItem: TListItem; subItem: Integer): Boolean;
+    function ShowStrInputDialog(listItem: TListItem; subItem: Integer): String;
+  public
+    constructor Create(owner: TComponent); override;
+    procedure AddExtraRow;
+    procedure Clear;
+    function GetRecipeData: TListItems;
+    procedure InitColumns(strCols: TStrings);
+    procedure OpenXmlWithDialog;
+    procedure SaveXml(filePath: string); overload;
+    procedure SaveXml; overload;
+    procedure SaveXmlWithDialog;
+    procedure SetData(listCols: TListColumns; listItems: TListItems); overload;
+    procedure SetData(filePath: string); overload;
+    property Enabled: Boolean read GetEnabled write SetEnabled;
+    property FilePath: string read GetFilePath;
+    { Public declarations }
+  end;
+
+implementation
+
+{$R *.dfm}
+
+constructor TFrame_RecipeTable.Create(owner: TComponent);
+begin
+  inherited;
+//  FInputDialog := TForm_InputDialog.Create( self );
+//  FOperDialog := TForm_OperationDialog.Create( self );
+//  FOperDialog.MiniDialog := true;
+end;
+
+procedure TFrame_RecipeTable.AddExtraRow;
+var
+  iCol: Integer;
+  listItem: TListItem;
+begin
+  listItem := ListView_RecipeTable.Items.Add;
+  listItem.Caption := '+';
+
+  for iCol := 0 to ListView_RecipeTable.Columns.Count - 2 do
+  begin
+    listItem.SubItems.Add( '' );
+  end;
+end;
+
+procedure TFrame_RecipeTable.Clear;
+begin
+  //ListView_RecipeTable.Clear;
+//  ListView_RecipeTable.Columns.Clear;
+  ListView_RecipeTable.Items.Clear;
+  AddExtraRow;
+end;
+
+function TFrame_RecipeTable.GetEnabled: Boolean;
+begin
+  Result := ListView_RecipeTable.Enabled;
+end;
+
+function TFrame_RecipeTable.GetFilePath: string;
+begin
+  if FFilePath = '' then
+  begin
+    Result := 'None';
+  end
+  else
+  begin
+    Result := FFilePath;
+  end;
+
+end;
+
+function TFrame_RecipeTable.GetRecipeData: TListItems;
+begin
+  Result := ListView_RecipeTable.Items;
+end;
+
+procedure TFrame_RecipeTable.InitColumns(strCols: TStrings);
+begin
+  SetColumns( strCols );
+  AddExtraRow;
+end;
+
+procedure TFrame_RecipeTable.ListView_RecipeTableLeftClickCell(Sender: TObject;
+    iItem, iSubItem: Integer);
+var
+  sTmp: String;
+  listItem: TListItem;
+  iCol: Integer;
+  bCheck: Boolean;
+begin
+  case iSubItem of
+    0: exit;
+    1: ShowBoolInputDialog( ListView_RecipeTable.Items[ iItem ], iSubItem - 1 );
+    2: ShowStrInputDialog( ListView_RecipeTable.Items[ iItem ], iSubItem - 1 );
+  end;
+
+  listItem := ListView_RecipeTable.Items[ iItem ];
+  bCheck := false;
+  for iCol := 0 to listItem.SubItems.Count - 1 do
+  begin
+    bCheck := bCheck or ( listItem.SubItems[ iCol ] <> '' );
+  end;
+
+  if bCheck = false then exit;
+
+  if listItem.Caption = '+' then
+  begin
+    listItem.Caption := '';
+    AddExtraRow;
+  end;
+end;
+
+procedure TFrame_RecipeTable.OpenXmlWithDialog;
+begin
+  if OpenDialog.Execute( self.Handle ) = true then
+  begin
+    SetData( OpenDialog.FileName );
+  end;
+end;
+
+procedure TFrame_RecipeTable.SaveXml(filePath: string);
+var
+  xmlWriter: TXMLWriter;
+begin
+  xmlWriter := TXMLWriter.Create;
+  xmlWriter.SetRootNode( XML_ROOT_NODE );
+  xmlWriter.SetData( ListView_RecipeTable.Columns, ListView_RecipeTable.Items );
+  xmlWriter.Write( filePath );
+  FFilePath := filePath;
+  xmlWriter.Free;
+end;
+
+procedure TFrame_RecipeTable.SaveXml;
+begin
+  SaveXml( self.FFilePath );
+end;
+
+procedure TFrame_RecipeTable.SaveXmlWithDialog;
+begin
+  if SaveDialog.Execute( self.Handle ) = true then
+  begin
+    SaveXml( SaveDialog.FileName );
+    ShowMessage( 'Recipe File Saving Success' );
+  end;
+end;
+
+procedure TFrame_RecipeTable.SetColumns(strings: TStrings);
+var
+  iCol: Integer;
+  listCol: TListColumn;
+begin
+  ListView_RecipeTable.Columns.Clear;
+  ListView_RecipeTable.Columns.Add;
+
+  for iCol := 0 to strings.Count - 1 do
+  begin
+    listCol := ListView_RecipeTable.Columns.Add;
+    listCol.Caption := strings[ iCol ];
+    listCol.MinWidth := 300;
+  end;
+
+  ListView_RecipeTable.Columns[ 0 ].MinWidth := 20;
+  ListView_RecipeTable.Columns[ 0 ].MaxWidth := 20;
+  ListView_RecipeTable.Items.Clear;
+end;
+
+procedure TFrame_RecipeTable.SetData(listCols: TListColumns; listItems: TListItems);
+var
+  iCol: Integer;
+begin
+  ListView_RecipeTable.Columns.Clear;
+  for iCol := 0 to listCols.Count - 1 do
+  begin
+    ListView_RecipeTable.Columns.Add.Caption := listCols[ iCol ].Caption;
+  end;
+
+  ListView_RecipeTable.Items.Clear;
+  for iCol := 0 to listItems.Count - 1 do
+  begin
+    ListView_RecipeTable.Items.AddItem( listItems[ iCol], iCol );
+  end;
+end;
+
+procedure TFrame_RecipeTable.SetData(filePath: string);
+var
+  xmlReader: TXMLReader;
+  iCol: Integer;
+  listItem: TListItem;
+  strings: TStrings;
+begin
+  xmlReader := TXMLReader.Create( filePath );
+  FFilePath := filePath;
+
+  if xmlReader.SetParentNodePosition( XML_ROOT_NODE ) = false then
+  begin
+    raise EReadError.Create( 'Can not found root node(' + XML_ROOT_NODE + ') from XML file : ' + filePath );
+    exit;
+  end;
+
+  SetColumns( xmlReader.GetColumns );
+  SetRows( xmlReader );
+
+  xmlReader.Free;
+end;
+
+procedure TFrame_RecipeTable.SetEnabled(const Value: Boolean);
+begin
+  ListView_RecipeTable.Enabled := Value;
+end;
+
+procedure TFrame_RecipeTable.SetRows(const xmlReader: TXMLReader);
+var
+  iCol, iRow: Integer;
+  listItem: TListItem;
+begin
+  iRow := 0;
+  while xmlReader.HasNext do
+  begin
+    listItem := ListView_RecipeTable.Items.Add;
+    //iRow := iRow + 1;
+    //listItem.Caption := IntToStr( iRow );  //Row Number Display
+    
+    for iCol := 0 to xmlReader.ColumnCount - 1 do
+    begin
+        listItem.SubItems.Add( xmlReader.GetFieldValue( iCol ) );
+    end;
+    xmlReader.MoveNext;
+  end;
+
+  AddExtraRow;
+end;
+
+function TFrame_RecipeTable.ShowBoolInputDialog(listItem: TListItem; subItem:
+    Integer): Boolean;
+var
+  bRet: Boolean;
+begin
+  Form_OperationDialog.MiniDialog := true;
+  if Form_OperationDialog.ShowModal <> mrCancel then
+  begin
+    bRet := Form_OperationDialog.GetValue;
+    if bRet = true then
+    begin
+      listItem.SubItems[ subItem ] := 'Open';
+    end
+    else
+    begin
+      listItem.SubItems[ subItem ] := 'Close';
+    end;
+  end;
+  Form_OperationDialog.MiniDialog := false;
+
+  Result := bRet;
+end;
+
+function TFrame_RecipeTable.ShowStrInputDialog(listItem: TListItem; subItem:
+    Integer): String;
+var
+  sRet: String;
+begin
+  if Form_InputDialog.ShowModal = mrOK then
+  begin
+    sRet := Form_InputDialog.GetValue;
+    listItem.SubItems[ subItem ] := sRet;
+    Result := sRet;
+  end;
+end;
+
+end.

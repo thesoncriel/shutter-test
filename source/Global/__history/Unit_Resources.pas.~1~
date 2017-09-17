@@ -1,0 +1,13 @@
+unit Unit_Resources;
+
+interface
+
+uses
+  AdvPicture;
+
+var
+  g_PicShutterOpen: TIPicture;
+  g_PicShutterClose: TIPicture;
+implementation
+
+end.

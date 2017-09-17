@@ -1,0 +1,70 @@
+object Form_CaptureHole: TForm_CaptureHole
+  Left = 0
+  Top = 0
+  Caption = ':::: Capture Hole ::::'
+  ClientHeight = 433
+  ClientWidth = 600
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  OldCreateOrder = False
+  OnEndDock = FormEndDock
+  PixelsPerInch = 96
+  TextHeight = 13
+  object Panel_Top: TPanel
+    Left = 0
+    Top = 0
+    Width = 600
+    Height = 10
+    Align = alTop
+    BevelEdges = [beBottom]
+    BevelOuter = bvNone
+    Color = clLime
+    ParentBackground = False
+    TabOrder = 0
+  end
+  object Panel_Bottom: TPanel
+    Left = 0
+    Top = 423
+    Width = 600
+    Height = 10
+    Align = alBottom
+    BevelEdges = [beTop]
+    BevelOuter = bvNone
+    Color = clLime
+    ParentBackground = False
+    TabOrder = 1
+    OnResize = Panel_BottomResize
+  end
+  object Panel_Left: TPanel
+    Left = 0
+    Top = 10
+    Width = 10
+    Height = 413
+    Align = alLeft
+    BevelEdges = [beRight]
+    BevelOuter = bvNone
+    Color = clLime
+    ParentBackground = False
+    TabOrder = 2
+    ExplicitTop = 41
+    ExplicitHeight = 351
+  end
+  object Panel_Right: TPanel
+    Left = 590
+    Top = 10
+    Width = 10
+    Height = 413
+    Align = alRight
+    BevelEdges = [beLeft]
+    BevelOuter = bvNone
+    Color = clLime
+    ParentBackground = False
+    TabOrder = 3
+    ExplicitTop = 41
+    ExplicitHeight = 351
+  end
+end

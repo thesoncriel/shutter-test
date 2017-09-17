@@ -1,0 +1,171 @@
+object Frame_CaptureOption: TFrame_CaptureOption
+  Left = 0
+  Top = 0
+  Width = 161
+  Height = 380
+  Align = alTop
+  TabOrder = 0
+  object GroupBox_CaptureOption: TGroupBox
+    Left = 3
+    Top = 3
+    Width = 150
+    Height = 366
+    Caption = 'Capture Option'
+    TabOrder = 0
+    object Label2: TLabel
+      Left = 16
+      Top = 92
+      Width = 38
+      Height = 13
+      Caption = 'Interval'
+    end
+    object Label1: TLabel
+      Left = 16
+      Top = 28
+      Width = 54
+      Height = 13
+      Caption = 'Start Delay'
+    end
+    object Label3: TLabel
+      Left = 16
+      Top = 151
+      Width = 36
+      Height = 13
+      Caption = 'Shutter'
+    end
+    object Edit_StartDelay: TEdit
+      Left = 16
+      Top = 47
+      Width = 121
+      Height = 31
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -19
+      Font.Name = 'Tahoma'
+      Font.Style = []
+      ParentFont = False
+      TabOrder = 0
+      Text = '1'
+      OnClick = Edit_Click
+    end
+    object Edit_Interval: TEdit
+      Left = 16
+      Top = 111
+      Width = 121
+      Height = 31
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -19
+      Font.Name = 'Tahoma'
+      Font.Style = []
+      ParentFont = False
+      TabOrder = 1
+      Text = '1'
+      OnClick = Edit_Click
+    end
+    object Button_Capture: TAdvSmoothButton
+      Left = 16
+      Top = 305
+      Width = 121
+      Height = 52
+      Appearance.Font.Charset = DEFAULT_CHARSET
+      Appearance.Font.Color = clWindowText
+      Appearance.Font.Height = -21
+      Appearance.Font.Name = 'Arial Black'
+      Appearance.Font.Style = []
+      Status.Caption = '0'
+      Status.Appearance.Fill.Color = clRed
+      Status.Appearance.Fill.ColorMirror = clNone
+      Status.Appearance.Fill.ColorMirrorTo = clNone
+      Status.Appearance.Fill.GradientType = gtSolid
+      Status.Appearance.Fill.BorderColor = clGray
+      Status.Appearance.Fill.Rounding = 0
+      Status.Appearance.Fill.ShadowOffset = 0
+      Status.Appearance.Font.Charset = DEFAULT_CHARSET
+      Status.Appearance.Font.Color = clWhite
+      Status.Appearance.Font.Height = -11
+      Status.Appearance.Font.Name = 'Tahoma'
+      Status.Appearance.Font.Style = []
+      Caption = 'Capture'
+      Color = clMaroon
+      ParentFont = False
+      TabOrder = 2
+      Version = '1.6.5.2'
+      OnClick = Button_CaptureClick
+    end
+    object Button_ShowCaptureForm: TAdvSmoothButton
+      Left = 16
+      Top = 249
+      Width = 121
+      Height = 53
+      Appearance.Font.Charset = DEFAULT_CHARSET
+      Appearance.Font.Color = clWindowText
+      Appearance.Font.Height = -16
+      Appearance.Font.Name = 'Tahoma'
+      Appearance.Font.Style = []
+      Status.Caption = '0'
+      Status.Appearance.Fill.Color = clRed
+      Status.Appearance.Fill.ColorMirror = clNone
+      Status.Appearance.Fill.ColorMirrorTo = clNone
+      Status.Appearance.Fill.GradientType = gtSolid
+      Status.Appearance.Fill.BorderColor = clGray
+      Status.Appearance.Fill.Rounding = 0
+      Status.Appearance.Fill.ShadowOffset = 0
+      Status.Appearance.Font.Charset = DEFAULT_CHARSET
+      Status.Appearance.Font.Color = clWhite
+      Status.Appearance.Font.Height = -11
+      Status.Appearance.Font.Name = 'Tahoma'
+      Status.Appearance.Font.Style = []
+      Caption = 'Show   Capture Form'
+      ParentFont = False
+      TabOrder = 3
+      Version = '1.6.5.2'
+      OnClick = Button_ShowCaptureFormClick
+    end
+    object ComboBox1: TComboBox
+      Left = 16
+      Top = 170
+      Width = 121
+      Height = 31
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -19
+      Font.Name = 'Tahoma'
+      Font.Style = []
+      ItemHeight = 23
+      ParentFont = False
+      TabOrder = 4
+      Text = 'ComboBox1'
+    end
+  end
+  object Button_Directory: TAdvSmoothButton
+    Left = 19
+    Top = 213
+    Width = 121
+    Height = 35
+    Appearance.Font.Charset = DEFAULT_CHARSET
+    Appearance.Font.Color = clWindowText
+    Appearance.Font.Height = -16
+    Appearance.Font.Name = 'Tahoma'
+    Appearance.Font.Style = []
+    Status.Caption = '0'
+    Status.Appearance.Fill.Color = clRed
+    Status.Appearance.Fill.ColorMirror = clNone
+    Status.Appearance.Fill.ColorMirrorTo = clNone
+    Status.Appearance.Fill.GradientType = gtSolid
+    Status.Appearance.Fill.BorderColor = clGray
+    Status.Appearance.Fill.Rounding = 0
+    Status.Appearance.Fill.ShadowOffset = 0
+    Status.Appearance.Font.Charset = DEFAULT_CHARSET
+    Status.Appearance.Font.Color = clWhite
+    Status.Appearance.Font.Height = -11
+    Status.Appearance.Font.Name = 'Tahoma'
+    Status.Appearance.Font.Style = []
+    Caption = '[ Directory ]'
+    Color = 59624
+    ParentFont = False
+    TabOrder = 1
+    Version = '1.6.5.2'
+    OnClick = Button_DirectoryClick
+  end
+end

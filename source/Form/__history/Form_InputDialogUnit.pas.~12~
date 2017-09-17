@@ -1,0 +1,75 @@
+unit Form_InputDialogUnit;
+
+interface
+
+uses
+  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
+  Dialogs, dxCore, dxButtons, StdCtrls, AdvEdit, AdvGlassButton;
+
+type
+  TForm3 = class(TForm)
+    Button_Num7: TdxButton;
+    Button_Num8: TdxButton;
+    Button_Num9: TdxButton;
+    Button_Num4: TdxButton;
+    Button_Num5: TdxButton;
+    Button_Num6: TdxButton;
+    Button_Num1: TdxButton;
+    Button_Num2: TdxButton;
+    Button_Num3: TdxButton;
+    Button_Num0: TdxButton;
+    Button_BackSpace: TAdvGlassButton;
+    Edit_Number: TAdvEdit;
+    Button_OK: TAdvGlassButton;
+    Button_Clear: TAdvGlassButton;
+    Button_Cancel: TAdvGlassButton;
+    procedure Button_CancelClick(Sender: TObject);
+    procedure Edit_NumberKeyPress(Sender: TObject; var Key: Char);
+    procedure Button_OKClick(Sender: TObject);
+    procedure FormShow(Sender: TObject);
+  private
+    function GetValue: String;
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  Form3: TForm3;
+
+implementation
+
+{$R *.dfm}
+
+procedure TForm3.Button_CancelClick(Sender: TObject);
+begin
+  self.ModalResult := mrCancel;
+  self.CloseModal;
+end;
+
+procedure TForm3.Edit_NumberKeyPress(Sender: TObject; var Key: Char);
+begin
+  if Key = #13 then
+  begin
+    Button_OKClick( Sender );
+  end; 
+end;
+
+procedure TForm3.Button_OKClick(Sender: TObject);
+begin
+  self.ModalResult := mrOK;
+  self.CloseModal;
+end;
+
+procedure TForm3.FormShow(Sender: TObject);
+begin
+  Edit_Number.Text := '';
+  Edit_Number.Focused := true;
+end;
+
+function TForm3.GetValue: String;
+begin
+  Result := Edit_Number.Text;
+end;
+
+end.

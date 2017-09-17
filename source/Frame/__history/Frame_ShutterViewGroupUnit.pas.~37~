@@ -1,0 +1,110 @@
+unit Frame_ShutterViewGroupUnit;
+
+interface
+
+uses
+  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
+  Dialogs, Frame_ShutterViewUnit, Class_Part, Class_PartList, 
+  Class_RecipeOperator;
+
+const
+  VIEW_HEIGHT = 150;
+  RECIPE_FILE_SECTION = 'Recipe File';
+  IDENT_NAME_BASE = 'File0';
+
+type
+  TFrame_ShutterViewGroup = class(TFrame)
+  private
+    FOnChangePartState: TPartActionEvent;
+    function GetItems(Index: Integer): TFrame_ShutterView;
+    { Private declarations }
+  protected
+  public
+    constructor Create(owner: TComponent);
+    procedure Add(shutterView: TFrame_ShutterView); overload;
+    procedure Add(partName: string); overload;
+    function Count: Integer;
+    procedure CreateViewByPartList(partList: TPartList);
+    procedure LoadRecipeByIniFile(iniFilePath: string);
+    property Items[Index: Integer]: TFrame_ShutterView read GetItems; default;
+    property OnChangePartState: TPartActionEvent read FOnChangePartState write
+        FOnChangePartState;
+    { Public declarations }
+  end;
+
+implementation
+
+uses
+  iniFiles;
+
+{$R *.dfm}
+
+constructor TFrame_ShutterViewGroup.Create(owner: TComponent);
+begin
+  inherited;
+  Parent := owner as TWinControl;
+end;
+
+procedure TFrame_ShutterViewGroup.Add(shutterView: TFrame_ShutterView);
+begin
+  shutterView.Top := ControlCount * VIEW_HEIGHT;
+  shutterView.Left := 0;                             
+  shutterView.Index := ControlCount;
+  shutterView.Parent := self;
+  //ShowMessage( IntToStr( ControlCount ) );
+  //InsertControl( shutterView );
+end;
+
+procedure TFrame_ShutterViewGroup.Add(partName: string);
+var
+  shutterView: TFrame_ShutterView;
+begin
+  shutterView := TFrame_ShutterView.Create( self );
+  shutterView.Name := StringReplace( partName, ' ', '_', [rfReplaceAll] );
+  shutterView.SetPartName( partName );
+
+  Add( shutterView );
+end;
+
+function TFrame_ShutterViewGroup.Count: Integer;
+begin
+  Result := ControlCount;
+end;
+
+procedure TFrame_ShutterViewGroup.CreateViewByPartList(partList: TPartList);
+var
+  i: Integer;
+begin
+  for i := 0 to partList.Count - 1 do
+  begin
+    Add( partList.Items[ i ].Name );
+  end;
+end;
+
+function TFrame_ShutterViewGroup.GetItems(Index: Integer): TFrame_ShutterView;
+begin
+  Result := self.Controls[ Index ] as TFrame_ShutterView;
+end;
+
+procedure TFrame_ShutterViewGroup.LoadRecipeByIniFile(iniFilePath: string);
+var
+  iniFile: TIniFile;
+  i,j: Integer;
+  iLen: Integer;
+  sIdent: String;
+begin
+  iniFile := TIniFile.Create( iniFilePath );
+  if iniFile.SectionExists( RECIPE_FILE_SECTION ) = false then exit;
+
+  for i := 0 to ControlCount - 1 do
+  begin
+    sIdent := FormatFloat( IDENT_NAME_BASE, i + 1 );
+    if iniFile.ValueExists( RECIPE_FILE_SECTION, sIdent ) = false then exit;
+
+    Items[ i ].RecipeFile := iniFile.ReadString( RECIPE_FILE_SECTION, sIdent, '' );
+  end;
+
+  iniFile.Free;
+end;
+
+end.

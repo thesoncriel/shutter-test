@@ -1,0 +1,26 @@
+unit Class_RecipeRow;
+
+interface
+
+uses
+  Classes;
+
+type
+  TRecipeRow = class(TObject)
+  public
+    Delay: Integer;
+    Operation: boolean;
+    constructor Create(strings: TStrings);
+  end;
+implementation
+
+uses
+  SysUtils;
+
+constructor TRecipeRow.Create(strings: TStrings);
+begin
+  Operation := LowerCase( strings[ 0 ] ) = 'open';
+  Delay := StrToInt( strings[ 1 ] );
+end;
+
+end.

@@ -1,0 +1,49 @@
+unit Class_RecipeRow;
+
+interface
+
+uses
+  Classes;
+
+type
+  IRecipeRow = interface(IInterface)
+    function Cols(columnIndex: Integer): Variant; stdcall;
+    procedure SetRowData(strings: TStrings); stdcall;
+  end;
+
+  TRecipeRow = class(TObject, IRecipeRow)
+  public
+    Operation: boolean;
+    Delay: Integer;
+    constructor Create(strings: TStrings);
+    function Cols(columnIndex: Integer): Variant; override;
+    procedure SetRowData(strings: TStrings); override;
+  end;
+
+
+
+implementation
+
+uses
+  SysUtils;
+
+function TRecipeRow.Cols(columnIndex: Integer): Variant;
+begin
+  case columnIndex of
+    0: Result := Operation;
+    1: Result := Delay;  
+  end;
+end;
+
+constructor TRecipeRow.Create(strings: TStrings);
+begin
+  SetRowData( strings );
+end;
+
+procedure TRecipeRow.SetRowData(strings: TStrings);
+begin
+  Operation := LowerCase( strings[ 0 ] ) = 'open';
+  Delay := StrToInt( strings[ 1 ] );
+end;
+
+end.

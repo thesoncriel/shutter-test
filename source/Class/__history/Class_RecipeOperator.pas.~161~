@@ -1,0 +1,314 @@
+unit Class_RecipeOperator;
+
+interface
+
+uses
+  Classes, ComCtrls, ExtCtrls, Class_RecipeTable;
+
+const
+  TEST_END = -100;
+  LOOP_INTERVAL = 1000;
+  DELAY = 1000 / LOOP_INTERVAL;
+
+type
+  TPartActionEvent = procedure(Sender: TObject; partIndex: integer; state:
+      boolean) of object;
+
+  TThread_Operator = class(TThread)
+  private
+    FTimeout: Double;
+    FOnExecute: TNotifyEvent;
+  public
+    procedure Execute; override;
+  published
+    property OnExecute: TNotifyEvent read FOnExecute write FOnExecute;
+  end;
+
+
+  TRecipeOperator = class(TObject)
+  private
+    FItems: TList;
+    FTables: TList;
+    FOnOperation: TPartActionEvent;
+    FTimer: TTimer;
+    FCurrStepCount: Array of Integer;
+    FAutoTestEnabled: Array of Integer;
+    FInfinity: Boolean;
+    FOnOperationEnd: TNotifyEvent;
+    FCurrTotalCount: Integer;
+    FGoalTotalCount: Integer;
+
+    FCheck: Integer;
+    //TdOper: TThread_Operator;
+
+    FRun: Boolean;
+    function EndCheck: Boolean;
+    function GetCurrentStep(partIndex: integer): Integer;
+    function GetItems(Index: Integer): TListItems;
+    function GetTables(Index: Integer): TRecipeTable;
+    function IsOperEnd: Boolean;
+
+  protected
+    procedure InitArray;
+    procedure OnTimer(Sender: TObject);
+  public
+    constructor Create;
+    destructor Destroy; override;
+    procedure Add(listItems: TListItems);
+    procedure Clear;
+    procedure Delete(index: Integer);
+    function GetCurrTotalCount: Integer;
+    function IsEachOperEnd: Boolean;
+    function IsOperRun: Boolean;
+    procedure Start;
+    procedure Stop;
+    property Infinity: Boolean read FInfinity write FInfinity;
+    property Items[Index: Integer]: TListItems read GetItems; default;
+    property Tables[Index: Integer]: TRecipeTable read GetTables;
+    property TotalCount: Integer read FGoalTotalCount write FGoalTotalCount;
+    property OnOperation: TPartActionEvent read FOnOperation write FOnOperation;
+    property OnOperationEnd: TNotifyEvent read FOnOperationEnd write
+        FOnOperationEnd;
+  end;
+
+
+
+implementation
+
+uses
+  SysUtils, Class_RecipeRow, Windows;
+
+constructor TRecipeOperator.Create;
+begin
+  FItems := TList.Create;
+  FTables := TList.Create;
+  
+  FTimer := TTimer.Create( Nil );
+  FTimer.Interval := LOOP_INTERVAL;
+  FTimer.OnTimer := OnTimer;
+  FTimer.Enabled := false;
+
+//  TdOper := TThread_Operator.Create( true );
+//  TdOper.OnExecute := OnTimer;
+  FRun := false;
+end;
+
+destructor TRecipeOperator.Destroy;
+begin
+  inherited;
+  FTimer.Enabled := false;
+  FTimer.Free;
+//  TdOper.DoTerminate;
+//  TdOper.Free;
+  FItems.Free;
+  FTables.Free;
+end;
+
+procedure TRecipeOperator.Add(listItems: TListItems);
+var
+  recipeTable: TRecipeTable;
+begin
+  FItems.Add( listItems );
+  recipeTable := TRecipeTable.Create;
+  recipeTable.SetData( listItems );
+  FTables.Add( recipeTable );
+end;
+
+procedure TRecipeOperator.Clear;
+begin
+  FItems.Clear;
+  FTables.Clear;
+end;
+
+procedure TRecipeOperator.Delete(index: Integer);
+begin
+  FItems.Delete( index );
+  FTables.Delete( index );
+end;
+
+function TRecipeOperator.EndCheck: Boolean;
+var
+  i: Integer;
+begin
+  if IsOperEnd = true then
+  begin
+//    FCurrTotalCount;
+//    FGoalTotalCount := FGoalTotalCount;
+    FTimer.Enabled := false;
+    FRun := false;
+    //TdOper.DoTerminate;
+    
+    for i := 0 to FTables.Count - 1 do
+    begin
+      Tables[ i ].MoveFirst;
+    end;
+
+    if Assigned( OnOperation ) then OnOperationEnd( self );
+
+    Result := true;
+  end
+  else
+  begin
+    Result := false;
+  end;
+end;
+
+function TRecipeOperator.GetCurrentStep(partIndex: integer): Integer;
+begin
+  Result := Tables[ partIndex ].CurrentRow;
+end;
+
+function TRecipeOperator.GetCurrTotalCount: Integer;
+var
+  iTmp: Integer;
+begin
+//  iTmp := Round( FCurrTotalCount / DELAY );
+//  if (iTmp = FCheck) and ( iTmp <> 0 ) then
+//  begin
+//    //iTmp := 100;
+//  end;
+//  FCheck := iTmp;
+//  Result := Round( FCurrTotalCount / DELAY );
+  Result := FCurrTotalCount;
+end;
+
+function TRecipeOperator.GetItems(Index: Integer): TListItems;
+begin
+  Result := TListItems( FItems.Items[ Index ] );
+end;
+
+function TRecipeOperator.GetTables(Index: Integer): TRecipeTable;
+begin
+  Result := TRecipeTable( FTables.Items[ Index ] );
+end;
+
+procedure TRecipeOperator.InitArray;
+var
+  i: Integer;
+  iLen: Integer;
+begin
+  iLen := Length( FCurrStepCount );
+
+  for i := 0 to iLen - 1 do
+  begin
+    FCurrStepCount[ i ] := 0;
+  end;
+end;
+
+function TRecipeOperator.IsEachOperEnd: Boolean;
+var
+  i: Integer;
+  bRet: Boolean;
+begin
+  bRet := false;
+
+  for i := 0 to FTables.Count - 1 do
+  begin
+    bRet := bRet or Tables[ i ].HasNext;
+  end;
+  
+  Result := Not bRet;
+end;
+
+function TRecipeOperator.IsOperEnd: Boolean;
+var
+  i: Integer;
+  bRet: Boolean;
+begin
+  if Infinity = true then
+  begin
+    Result := FCurrTotalCount >= FGoalTotalCount;
+  end
+  else
+  begin
+    Result := IsEachOperEnd
+  end;
+end;
+
+function TRecipeOperator.IsOperRun: Boolean;
+begin
+  Result := FTimer.Enabled;
+  Result := FRun;
+end;
+
+procedure TRecipeOperator.OnTimer(Sender: TObject);
+var
+  i: Integer;
+  row: TRecipeRow;
+begin
+  
+  for i := 0 to FItems.Count - 1 do
+  begin
+    if Tables[ i ].HasNext = false then
+    begin
+      if FInfinity = true then
+        Tables[ i ].MoveFirst
+      else
+        continue;
+    end;
+
+    row := Tables[ i ].Current;
+
+    if FCurrStepCount[ i ] > ( row.Delay {* DELAY} ) then
+    begin
+      if FCurrStepCount[ i ] = 0 then
+      begin
+        if Assigned( OnOperation ) then OnOperation( self, i, row.Operation );
+      end;
+
+      Tables[ i ].MoveNext;
+      FCurrStepCount[ i ] := 0;
+    end
+    else
+    begin
+      FCurrStepCount[ i ] := FCurrStepCount[ i ] + 1;
+    end;
+  end;
+  FCurrTotalCount := FCurrTotalCount + 1;
+  if EndCheck = true then exit;
+end;
+
+procedure TRecipeOperator.Start;
+begin
+  SetLength( FCurrStepCount, FItems.Count );
+  InitArray;
+  FCurrTotalCount := 0;
+  FTimer.Enabled := true;
+  FRun := true;
+  //TdOper.Resume;
+end;
+
+procedure TRecipeOperator.Stop;
+begin
+  FRun := false;
+  //TdOper.Terminate;
+  FTimer.Enabled := false;
+  //InitArray( FCurrStepCount );
+end;
+
+procedure TThread_Operator.Execute;
+var
+  F: TLargeInteger;
+  Stop, Start: Int64;
+  Dlit: Int64;
+begin
+  QueryPerformanceFrequency( F );
+  FTimeOut := 1000 / F;
+  repeat
+  begin
+    QueryPerformanceCounter( Start );
+
+    if Assigned( OnExecute ) then OnExecute( self );
+
+    QueryPerformanceCounter( Stop );
+    Dlit := Trunc( ( Stop - Start ) * FTimeOut );
+    if ( 1000 - Dlit ) > 0 then
+      sleep( 1000 - Dlit )
+    else
+      sleep( 50 );
+  end
+  until self.Terminated;
+end;
+
+
+end.

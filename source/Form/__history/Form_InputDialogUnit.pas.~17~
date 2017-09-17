@@ -1,0 +1,99 @@
+unit Form_InputDialogUnit;
+
+interface
+
+uses
+  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
+  Dialogs, dxCore, dxButtons, StdCtrls, AdvEdit, AdvGlassButton;
+
+type
+  TForm_InputDialog = class(TForm)
+    Button_Num7: TdxButton;
+    Button_Num8: TdxButton;
+    Button_Num9: TdxButton;
+    Button_Num4: TdxButton;
+    Button_Num5: TdxButton;
+    Button_Num6: TdxButton;
+    Button_Num1: TdxButton;
+    Button_Num2: TdxButton;
+    Button_Num3: TdxButton;
+    Button_Num0: TdxButton;
+    Button_BackSpace: TAdvGlassButton;
+    Edit_Number: TAdvEdit;
+    Button_OK: TAdvGlassButton;
+    Button_Clear: TAdvGlassButton;
+    Button_Cancel: TAdvGlassButton;
+    procedure Button_BackSpaceClick(Sender: TObject);
+    procedure Button_CancelClick(Sender: TObject);
+    procedure Button_ClearClick(Sender: TObject);
+    procedure Button_NumClick(Sender: TObject);
+    procedure Edit_NumberKeyPress(Sender: TObject; var Key: Char);
+    procedure Button_OKClick(Sender: TObject);
+    procedure FormShow(Sender: TObject);
+  private
+    function GetValue: String;
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  Form_InputDialog: TForm_InputDialog;
+
+implementation
+
+{$R *.dfm}
+
+procedure TForm_InputDialog.Button_BackSpaceClick(Sender: TObject);
+var
+  sTmp: String;
+begin
+  sTmp := Edit_Number.Text;
+  Edit_Number.Text := Copy( sTmp, 1, Length( sTmp ) - 1 );
+end;
+
+procedure TForm_InputDialog.Button_CancelClick(Sender: TObject);
+begin
+  self.ModalResult := mrCancel;
+  self.CloseModal;
+end;
+
+procedure TForm_InputDialog.Button_ClearClick(Sender: TObject);
+begin
+  Edit_Number.Text := '';
+end;
+
+procedure TForm_InputDialog.Button_NumClick(Sender: TObject);
+var
+  sTmp: String;
+begin
+  sTmp := (Sender as TButton).Caption;
+  Edit_Number.Text := Edit_Number.Text + sTmp;
+end;
+
+procedure TForm_InputDialog.Edit_NumberKeyPress(Sender: TObject; var Key: Char);
+begin
+  if Key = #13 then
+  begin
+    Button_OKClick( Sender );
+  end; 
+end;
+
+procedure TForm_InputDialog.Button_OKClick(Sender: TObject);
+begin
+  self.ModalResult := mrOK;
+  self.CloseModal;
+end;
+
+procedure TForm_InputDialog.FormShow(Sender: TObject);
+begin
+  Edit_Number.Text := '';
+  Edit_Number.SetFocus;
+end;
+
+function TForm_InputDialog.GetValue: String;
+begin
+  Result := Edit_Number.Text;
+end;
+
+end.

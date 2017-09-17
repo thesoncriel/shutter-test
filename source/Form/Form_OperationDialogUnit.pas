@@ -1,0 +1,114 @@
+unit Form_OperationDialogUnit;
+
+interface
+
+uses
+  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
+  Dialogs, StdCtrls, dxCore, dxButtons, ExtCtrls, AdvPicture, Class_Part;
+
+type
+  TForm_OperationDialog = class(TForm)
+    Label_PartName: TLabel;
+    Button_Open: TdxButton;
+    Button_Close: TdxButton;
+    AdvPicture_PartState: TAdvPicture;
+    procedure FormCreate(Sender: TObject);
+    procedure Button_CloseClick(Sender: TObject);
+    procedure Button_OpenClick(Sender: TObject);
+  private
+    FUserOper: Boolean;
+//    FShutterClose: TIPicture;
+//    FShutterOpen: TIPicture;
+    function GetMiniDialog: Boolean;
+    procedure SetMiniDialog(cmdValue: boolean);
+  protected
+    procedure SetState(partState: boolean);
+  public
+    function GetValue: Boolean;
+    procedure SetPartState(part: TAbsPart); overload;
+    procedure SetPartState(partName: string; partState: boolean); overload;
+    property MiniDialog: Boolean read GetMiniDialog write SetMiniDialog;
+    { Public declarations }
+  end;
+
+var
+  Form_OperationDialog: TForm_OperationDialog;
+
+implementation
+
+uses
+  Unit_Resources;
+
+{$R *.dfm}
+
+procedure TForm_OperationDialog.FormCreate(Sender: TObject);
+begin
+//  FShutterClose := TIPicture.Create;
+//  FShutterOpen := TIPicture.Create;
+//  FShutterClose.LoadFromFile( IMG_SHUTTER_CLOSE );
+//  FShutterOpen.LoadFromFile( IMG_SHUTTER_OPEN );
+end;
+
+procedure TForm_OperationDialog.Button_CloseClick(Sender: TObject);
+begin
+  //FUserOper := true;
+  self.CloseModal;
+end;
+
+procedure TForm_OperationDialog.Button_OpenClick(Sender: TObject);
+begin
+  //FUserOper := true;
+  self.CloseModal;
+end;
+
+function TForm_OperationDialog.GetMiniDialog: Boolean;
+begin
+  Result := Not AdvPicture_PartState.Visible;
+end;
+
+function TForm_OperationDialog.GetValue: Boolean;
+begin
+  Result := self.ModalResult = mrYes;
+end;
+
+procedure TForm_OperationDialog.SetMiniDialog(cmdValue: boolean);
+begin
+  AdvPicture_PartState.Visible := Not cmdValue;
+  Label_PartName.Visible := Not cmdValue;
+
+  if cmdValue = true then
+  begin
+    self.Height := 110;
+  end
+  else
+  begin
+    self.Height := 280;
+  end;
+end;
+
+procedure TForm_OperationDialog.SetPartState(part: TAbsPart);
+begin
+  Label_PartName.Caption := part.Name;
+  SetState( part.GetPartState );
+end;
+
+procedure TForm_OperationDialog.SetPartState(partName: string; partState:
+    boolean);
+begin
+  Label_PartName.Caption := partName;
+  SetState( partState );
+end;
+
+procedure TForm_OperationDialog.SetState(partState: boolean);
+begin
+  if partState = true then
+  begin
+    AdvPicture_PartState.Picture := g_PicShutterOpen;
+  end
+  else
+  begin
+    AdvPicture_PartState.Picture := g_PicShutterClose;
+  end;
+end;
+
+end.

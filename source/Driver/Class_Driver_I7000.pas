@@ -1,0 +1,274 @@
+unit Class_Driver_I7000;
+
+interface
+
+uses
+  Classes, I7000, Controls, extctrls;
+
+const
+  DRIVER_I7000_COMPORT_SECTION = 'ComPort';
+  TIMER_INTERVAL = 500;
+type
+  TIOType = (ioInput=$01, ioOutput);
+  TADType = (adAnalog=$11, adDigital);
+  //TModuleID_I7000 = (mi7012=$7012, mi7017=$7017, mi7055=$7055, mi7520=$7520);
+
+  TParseInfo = class(TObject)
+
+  private
+    FAddress: Integer;
+    FADType: TADType;
+    FChannel: Integer;
+    FIOType: TIOType;
+  protected
+    procedure SetADType(value: string);
+    procedure SetIOType(value: string);
+  public
+    constructor Create; overload;
+    constructor Create(strParseInfo: string); overload;
+    property Address: Integer read FAddress write FAddress;
+    property ADType: TADType read FADType write FADType;
+    property Channel: Integer read FChannel write FChannel;
+    property IOType: TIOType read FIOType write FIOType;
+  end;
+  
+
+  TDriver_I7000 = class(TComponent)
+
+  private
+    FBaudRate: Integer;
+    FDataBit: Integer;
+    FModuleID: Integer;
+    FParity: Integer;
+    FPortNum: Integer;
+    FStopBit: Integer;
+    FOpen: Boolean;
+    FTimer: TTimer;
+    
+    FWordBuffer: Array[ 0..10 ] of Word;
+    FSingleBuffer: Array[ 0..10 ] of Single;
+    FSingleArrayBuffer: Array [ 0..10, 0..10 ] of Single;
+    FszSend: PChar;
+    FszReceive: PChar;
+
+    FReceivedWordBuffer: Array[ 0.. 10 ] of Word;
+    procedure SetModuleID(const Value: Integer);
+  protected
+    function BoolToInt(value: boolean): Integer;
+    procedure OnTimer_ReceiveData(Sender: TObject);
+  public
+    constructor Create(owner: TComponent);
+    destructor Destroy; override;
+    procedure Close;
+    function GetBooleanValue(parseInfo: TParseInfo): boolean;
+    function IsOpen: boolean;
+    procedure LoadConfigByIniFile(iniFilePath: string);
+    function Open: boolean;
+    procedure SetBooleanValue(parseInfo: TParseInfo; value: boolean);
+    function IntToModuleID(moduleID: Integer): Integer;
+    property BaudRate: Integer read FBaudRate write FBaudRate;
+    property DataBit: Integer read FDataBit write FDataBit;
+    property ModuleID: Integer read FModuleID write SetModuleID;
+    property Parity: Integer read FParity write FParity;
+    property PortNum: Integer read FPortNum write FPortNum;
+    property StopBit: Integer read FStopBit write FStopBit;
+  end;
+
+implementation
+
+uses
+  SysUtils, iniFiles, TypInfo;
+
+constructor TDriver_I7000.Create(owner: TComponent);
+begin
+  inherited;
+
+  FPortNum := 1;
+  FBaudRate := 9600;
+  FDataBit := 8;
+  FParity := 0;
+  FStopBit := 1;
+
+  FTimer := TTimer.Create( nil );
+  FTimer.Interval := TIMER_INTERVAL;
+  FTimer.OnTimer := OnTimer_ReceiveData;
+
+  FWordBuffer[ 3 ] := 0;
+  FWordBuffer[ 4 ] := 100;
+end;
+
+destructor TDriver_I7000.Destroy;
+begin
+  inherited;
+  Close;
+end;
+
+function TDriver_I7000.BoolToInt(value: boolean): Integer;
+begin
+  if value = true then
+  begin
+    Result := 1;
+  end
+  else
+  begin
+    Result := 0;
+  end;
+end;
+
+procedure TDriver_I7000.Close;
+begin
+  FTimer.Enabled := false;
+  Close_Com( Chr( FPortNum ) );
+end;
+
+function TDriver_I7000.GetBooleanValue(parseInfo: TParseInfo): boolean;
+var
+  iAddress, iChannel: Integer;
+  iRet: Integer;
+begin
+  iAddress := parseInfo.Address;
+  iChannel := parseInfo.Channel;
+  iRet := ( ( FReceivedWordBuffer[ iAddress ] shr iChannel ) and $01 );
+  Result := iRet = 0;
+end;
+
+function TDriver_I7000.IsOpen: boolean;
+begin
+  Result := FOpen;
+end;
+
+procedure TDriver_I7000.LoadConfigByIniFile(iniFilePath: string);
+var
+  iniFile: TIniFile;
+begin
+  iniFile := TIniFile.Create( iniFilePath );
+  FPortNum := iniFile.ReadInteger( DRIVER_I7000_COMPORT_SECTION, 'ComNumber', 1 );
+  FBaudRate := iniFile.ReadInteger( DRIVER_I7000_COMPORT_SECTION, 'Baud', 9600 );
+  FParity := iniFile.ReadInteger( DRIVER_I7000_COMPORT_SECTION, 'Parity', 0 );
+  FDataBit := iniFile.ReadInteger( DRIVER_I7000_COMPORT_SECTION, 'DataBit', 8 );
+  FStopBit := iniFile.ReadInteger( DRIVER_I7000_COMPORT_SECTION, 'StopBit', 1 );
+  FModuleID := IntToModuleID(
+     iniFile.ReadInteger( DRIVER_I7000_COMPORT_SECTION, 'ModuleID', 7520 ) );
+  iniFile.Free;
+end;
+
+function TDriver_I7000.Open: boolean;
+var
+  iRet: Integer;
+begin
+  FWordBuffer[ 0 ] := Word( PortNum );
+  FWordBuffer[ 2 ] := Ord( FModuleID );
+  iRet := Open_Com( Chr( FPortNum ), FBaudRate, Chr( FDataBit ), Chr( FParity ), Chr( FStopBit ) );
+  FTimer.Enabled := true;
+
+  FOpen := iRet = 0; //0 value is OK
+
+  Result := FOpen;
+end;
+
+procedure TDriver_I7000.SetBooleanValue(parseInfo: TParseInfo; value: boolean);
+var
+  iAddress, iChannel: Integer;
+begin
+  if FOpen = false then Open;
+
+  iAddress := parseInfo.Address;
+  iChannel := parseInfo.Channel;
+  //FWordBuffer[ 0 ] := Word( PortNum );
+  FWordBuffer[ 1 ] := Word( iAddress );
+  //FWordBuffer[ 2 ] := FModuleID;
+  FWordBuffer[ 7 ] := iChannel;
+  FWordBuffer[ 8 ] := BoolToInt( value );
+
+//  FWordBuffer[ 0 ] := 6;
+//  FWordBuffer[ 1 ] := 5;
+//  FWordBuffer[ 2 ] := $7055;
+//  FWordBuffer[ 3 ] := 0;
+//  FWordBuffer[ 4 ] := 100;
+//  FWordBuffer[ 5 ] := 0;
+//  FWordBuffer[ 6 ] := 0;
+//  FWordBuffer[ 7 ] := 1;
+//  FWordBuffer[ 8 ] := 1;
+
+  I7000.DigitalBitOut( @FWordBuffer[ 0 ], @FSingleBuffer[ 0 ], FszSend, FszReceive );
+end;
+
+procedure TDriver_I7000.SetModuleID(const Value: Integer);
+begin
+  FModuleID := Value;
+end;
+
+procedure TDriver_I7000.OnTimer_ReceiveData(Sender: TObject);
+var
+  iAddress: Integer;
+begin
+  if FOpen = false then Open;
+
+  for iAddress := $01 to $05 do
+  begin
+    FWordBuffer[ 1 ] := Word( iAddress );
+    I7000.DigitalIn( @FWordBuffer[ 0 ], @FSingleBuffer[ 0 ], FszSend, FszReceive );
+    FReceivedWordBuffer[ iAddress ] := FWordBuffer[ 5 ];
+  end;
+end;
+
+function TDriver_I7000.IntToModuleID(moduleID: Integer): Integer;
+var
+  iRet: Integer;
+  iTmp: Integer;
+begin
+  case moduleID of
+    7012: iRet := $7012;
+    7017: iRet := $7017;
+    7055: iRet := $7055;
+    7520: iRet := $7520;
+  end;
+  Result := iRet;
+end;
+
+constructor TParseInfo.Create;
+begin
+  inherited;
+  // TODO -cMM: TParseInfo.Create default body inserted
+end;
+
+constructor TParseInfo.Create(strParseInfo: string);
+var
+  sList: TStringList;
+begin
+  sList := TStringList.Create;
+  sList.Delimiter := ',';
+  sList.DelimitedText := strParseInfo;
+  
+  Address := StrToInt( sList[ 0 ] );
+  SetADType( sList[ 1 ] );
+  SetIOType( sList[ 2 ] );
+  Channel := StrToInt( sList[ 3 ] );
+  sList.Free;
+end;
+
+procedure TParseInfo.SetADType(value: string);
+begin
+  if UpperCase( value ) = 'D' then
+  begin
+    FADType := adDigital;
+  end
+  else
+  begin
+    FADType := adAnalog;
+  end;
+end;
+
+procedure TParseInfo.SetIOType(value: string);
+begin
+  if UpperCase( value ) = 'I' then
+  begin
+    FIOType := ioInput;
+  end
+  else
+  begin
+    FIOType := ioOutput;
+  end;
+end;
+
+end.

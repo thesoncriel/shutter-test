@@ -1,0 +1,26 @@
+unit Unit_Resources;
+
+interface
+
+uses
+  AdvPicture;
+
+procedure InitResources;
+
+const
+  IMG_SHUTTER_CLOSE = '.\img\ShutterClose.bmp';
+  IMG_SHUTTER_OPEN = '.\img\ShutterOpen.bmp';
+var
+  g_PicShutterOpen: TIPicture;
+  g_PicShutterClose: TIPicture;
+implementation
+
+procedure InitResources;
+begin
+  g_PicShutterOpen := TIPicture.Create;
+  g_PicShutterClose := TIPicture.Create;
+  g_PicShutterOpen.LoadFromFile( IMG_SHUTTER_OPEN );
+  g_PicShutterClose.LoadFromFile( IMG_SHUTTER_CLOSE );
+end;
+
+end.

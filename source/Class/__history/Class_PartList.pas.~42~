@@ -1,0 +1,138 @@
+unit Class_PartList;
+
+interface
+
+uses
+  Windows, Classes, Class_Part, Class_Driver_I7000;
+
+const
+  PARSE_INFO_NAMES: array[0..2] of string = ('Open', 'Close', 'SolOn');
+  SECTION_NAME_BASE = 'Vision System0';
+
+type
+  TPartList = class(TObject)
+  private
+    FItems: TList;
+    FDriver_I7000: TDriver_I7000;
+    function GetItems(Index: Integer): TAbsPart;
+  public
+    constructor Create;
+    destructor Destroy; override;
+    procedure Add(part: TAbsPart);
+    function Count: integer;
+  procedure CreatePartsByIniFile(iniFilePath: string);
+    procedure Delete(index: Integer);
+    function GetPartByName(partName: string): TAbsPart;
+    function Remove(part: TAbsPart): Integer;
+    procedure SetDriver(driver: TComponent);
+  procedure SetDriverToAllParts(driver: TComponent);
+    property Items[Index: Integer]: TAbsPart read GetItems; default;
+  end;
+
+implementation
+
+uses
+  iniFiles, SysUtils;
+
+constructor TPartList.Create;
+begin
+  inherited;
+  FItems := TList.Create;
+end;
+
+destructor TPartList.Destroy;
+begin
+  inherited;
+  FItems.Free;
+end;
+
+procedure TPartList.Add(part: TAbsPart);
+begin
+  FItems.Add( @part );
+end;
+
+function TPartList.Count: integer;
+begin
+  Result := FItems.Count;
+end;
+
+procedure TPartList.CreatePartsByIniFile(iniFilePath: string);
+var
+  iniFile: TIniFile;
+  aParseInfo: array of TParseInfo;
+  i,j: Integer;
+  part: TAbsPart;
+  iLen: Integer;
+  sSectionName: String;
+begin
+  iniFile := TIniFile.Create( iniFilepath );
+  iLen := Length( PARSE_INFO_NAMES );
+  SetLength( aParseInfo, iLen );
+
+  for i := 0 to 10 do
+  begin
+    sSectionName := FormatFloat( SECTION_NAME_BASE, i + 1 );
+    if iniFile.SectionExists( sSectionName ) = false then exit;
+
+    for j := 0 to iLen - 1 do
+    begin
+      aParseInfo[ j ] := TParseInfo.Create( iniFile.ReadString( sSectionName, PARSE_INFO_NAMES[ j ], '' ) );
+    end;
+      
+    part := TPart_OpenClose.Create( aParseInfo );
+    part.PartName := iniFile.ReadString( sSectionName, 'Name', 'partName' );
+    self.Add( part );
+  end;
+end;
+
+procedure TPartList.Delete(index: Integer);
+begin
+  FItems.Delete( index );
+end;
+
+function TPartList.Remove(part: TAbsPart): Integer;
+begin
+  Result := FItems.Remove( @part );
+end;
+
+function TPartList.GetItems(Index: Integer): TAbsPart;
+var
+  pItem: Pointer;
+begin
+  pItem := FItems[ Index ];
+  Result := TAbsPart( pItem );
+end;
+
+function TPartList.GetPartByName(partName: string): TAbsPart;
+var
+  I: Integer;
+  part: TAbsPart;
+begin
+  for I := 0 to FItems.Count - 1 do
+  begin
+    part := TabsPart( FItems[ I ] );
+
+    if part.Name = partName then
+    begin
+      Result := part;
+    end;
+  end;
+end;
+
+procedure TPartList.SetDriver(driver: TComponent);
+begin
+  FDriver_I7000 := driver as TDriver_I7000;
+end;
+
+procedure TPartList.SetDriverToAllParts(driver: TComponent);
+var
+  i: Integer;
+begin
+  SetDriver( driver );
+  for i := 0 to Count - 1 do
+  begin
+    Items[ i ].SetDriver( driver );
+  end;
+end;
+
+end.

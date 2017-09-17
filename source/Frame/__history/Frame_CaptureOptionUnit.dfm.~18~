@@ -1,0 +1,135 @@
+object Frame_CaptureOption: TFrame_CaptureOption
+  Left = 0
+  Top = 0
+  Width = 161
+  Height = 330
+  Align = alTop
+  TabOrder = 0
+  object GroupBox_CaptureOption: TGroupBox
+    Left = 3
+    Top = 3
+    Width = 150
+    Height = 318
+    Caption = 'Capture Option'
+    TabOrder = 0
+    object Label2: TLabel
+      Left = 16
+      Top = 92
+      Width = 38
+      Height = 13
+      Caption = 'Interval'
+    end
+    object Label1: TLabel
+      Left = 16
+      Top = 28
+      Width = 54
+      Height = 13
+      Caption = 'Start Delay'
+    end
+    object Edit_StartDelay: TEdit
+      Left = 16
+      Top = 47
+      Width = 121
+      Height = 32
+      TabOrder = 0
+      OnClick = Edit_Click
+    end
+    object Edit_Interval: TEdit
+      Left = 16
+      Top = 111
+      Width = 121
+      Height = 34
+      TabOrder = 1
+      OnClick = Edit_Click
+    end
+    object Button_Capture: TAdvSmoothButton
+      Left = 16
+      Top = 253
+      Width = 121
+      Height = 52
+      Appearance.Font.Charset = DEFAULT_CHARSET
+      Appearance.Font.Color = clWindowText
+      Appearance.Font.Height = -21
+      Appearance.Font.Name = 'Arial Black'
+      Appearance.Font.Style = []
+      Status.Caption = '0'
+      Status.Appearance.Fill.Color = clRed
+      Status.Appearance.Fill.ColorMirror = clNone
+      Status.Appearance.Fill.ColorMirrorTo = clNone
+      Status.Appearance.Fill.GradientType = gtSolid
+      Status.Appearance.Fill.BorderColor = clGray
+      Status.Appearance.Fill.Rounding = 0
+      Status.Appearance.Fill.ShadowOffset = 0
+      Status.Appearance.Font.Charset = DEFAULT_CHARSET
+      Status.Appearance.Font.Color = clWhite
+      Status.Appearance.Font.Height = -11
+      Status.Appearance.Font.Name = 'Tahoma'
+      Status.Appearance.Font.Style = []
+      Caption = 'Capture'
+      Color = clMaroon
+      ParentFont = False
+      TabOrder = 2
+      Version = '1.6.5.2'
+      OnClick = Button_CaptureClick
+    end
+    object Button_ShowCaptureForm: TAdvSmoothButton
+      Left = 16
+      Top = 200
+      Width = 121
+      Height = 53
+      Appearance.Font.Charset = DEFAULT_CHARSET
+      Appearance.Font.Color = clWindowText
+      Appearance.Font.Height = -16
+      Appearance.Font.Name = 'Tahoma'
+      Appearance.Font.Style = []
+      Status.Caption = '0'
+      Status.Appearance.Fill.Color = clRed
+      Status.Appearance.Fill.ColorMirror = clNone
+      Status.Appearance.Fill.ColorMirrorTo = clNone
+      Status.Appearance.Fill.GradientType = gtSolid
+      Status.Appearance.Fill.BorderColor = clGray
+      Status.Appearance.Fill.Rounding = 0
+      Status.Appearance.Fill.ShadowOffset = 0
+      Status.Appearance.Font.Charset = DEFAULT_CHARSET
+      Status.Appearance.Font.Color = clWhite
+      Status.Appearance.Font.Height = -11
+      Status.Appearance.Font.Name = 'Tahoma'
+      Status.Appearance.Font.Style = []
+      Caption = 'Show   Capture Form'
+      ParentFont = False
+      TabOrder = 3
+      Version = '1.6.5.2'
+      OnClick = Button_ShowCaptureFormClick
+    end
+  end
+  object Button_Directory: TAdvSmoothButton
+    Left = 19
+    Top = 166
+    Width = 121
+    Height = 35
+    Appearance.Font.Charset = DEFAULT_CHARSET
+    Appearance.Font.Color = clWindowText
+    Appearance.Font.Height = -16
+    Appearance.Font.Name = 'Tahoma'
+    Appearance.Font.Style = []
+    Status.Caption = '0'
+    Status.Appearance.Fill.Color = clRed
+    Status.Appearance.Fill.ColorMirror = clNone
+    Status.Appearance.Fill.ColorMirrorTo = clNone
+    Status.Appearance.Fill.GradientType = gtSolid
+    Status.Appearance.Fill.BorderColor = clGray
+    Status.Appearance.Fill.Rounding = 0
+    Status.Appearance.Fill.ShadowOffset = 0
+    Status.Appearance.Font.Charset = DEFAULT_CHARSET
+    Status.Appearance.Font.Color = clWhite
+    Status.Appearance.Font.Height = -11
+    Status.Appearance.Font.Name = 'Tahoma'
+    Status.Appearance.Font.Style = []
+    Caption = '[ Directory ]'
+    Color = 59624
+    ParentFont = False
+    TabOrder = 1
+    Version = '1.6.5.2'
+    OnClick = Button_DirectoryClick
+  end
+end

@@ -1,0 +1,190 @@
+unit Class_Part;
+
+interface
+
+uses
+  Class_Driver_I7000, Classes;
+
+const
+  TIME_OUT_COUNT = 2; 
+
+type
+  TAbsPart = class(TObject)
+  private
+    procedure SetName(const Value: string);
+  protected
+    FName: string;
+    FParseInfo: TParseInfo;
+    FTimeOutCount: Integer;
+    FActionValue: Boolean;
+    FTimeOut: Boolean;
+    FActionConfirm: Boolean;
+  public
+    constructor Create(parseInfo: TParseInfo); virtual; abstract;
+    function GetPartState: Variant; virtual; abstract;
+    function IsTimeOut: Boolean; virtual; abstract;
+    procedure SetDriver(driver: TComponent); virtual; abstract;
+    procedure SetPartAction(cmdValue: Boolean); virtual;
+    property Name: string read FName write SetName;
+    property ParseInfo: TParseInfo read FParseInfo;
+  end;
+
+  TPart_OpenClose = class(TAbsPart)
+
+  protected
+    FDriver: TDriver_I7000;
+    FParseInfoGetOpen: TParseInfo;
+    FParseInfoGetClose: TParseInfo;
+    FParseInfoSetClose: TParseInfo;
+    FParseInfoSetOpen: TParseInfo;
+
+    FState: Boolean;
+    procedure CheckTimeOut(recvValue: Boolean);
+
+  public
+    constructor Create(parseInfo: TParseInfo); overload; override;
+    constructor Create(aParseInfo: Array of TParseInfo); overload;
+    function GetPartState: Variant; override;
+    function IsTimeOut: Boolean; override;
+    procedure OffAction;
+    procedure OnAction;
+    procedure SetPartAction(cmdValue: boolean); override;
+    procedure SetDriver(driver: TComponent); override;
+    procedure SetDriver_I7000(driver: TDriver_I7000);
+  end;
+
+implementation
+
+uses
+  SysUtils;
+
+constructor TPart_OpenClose.Create(parseInfo: TParseInfo);
+begin
+  inherited;
+  FParseInfo := parseInfo;
+  FName := '';
+  FActionValue := false;
+  FActionConfirm := true;
+end;
+
+constructor TPart_OpenClose.Create(aParseInfo: Array of TParseInfo);
+begin
+  inherited;
+  //FParseInfo := aParseInfo[ 2 ];
+  FParseInfoGetOpen := aParseInfo[ 0 ];
+  FParseInfoGetClose := aParseInfo[ 1 ];
+  FparseInfoSetOpen := aParseInfo[ 2 ];
+  FparseInfoSetClose := aParseInfo[ 3 ];
+  FName := '';
+  FActionConfirm := true;
+  FActionValue := false;
+end;
+
+procedure TPart_OpenClose.CheckTimeOut(recvValue: Boolean);
+begin
+  if ( FActionConfirm = true ) or ( recvValue = FActionValue ) then
+  begin
+    FTimeOut := false;
+    FTimeOutCount := 0;
+    FActionConfirm := true;
+    exit;
+  end;
+
+  if FTimeOutCount > TIME_OUT_COUNT then
+  begin
+    //raise Exception.Create( 'operation time out' );
+    FTimeOut := true;
+  end
+  else
+  begin
+    FTimeOutCount := FTimeOutCount + 1;
+  end;
+end;
+
+
+{ TPart_OpenClose }
+
+function TPart_OpenClose.GetPartState: Variant;
+var
+  bRet: Boolean;
+begin
+  bRet := FState;;
+  if FDriver.GetBooleanValue( FParseInfoGetClose ) = true then
+  begin
+    bRet := false;
+  end
+  else if FDriver.GetBooleanValue( FParseInfoGetOpen ) = true then
+  begin
+    bRet := true;
+  end;
+
+  CheckTimeOut( bRet );
+  //TODO - 테스트후 바꿀 것
+  Result := bRet;
+
+  //Result := FState;
+end;
+
+function TPart_OpenClose.IsTimeOut: Boolean;
+begin
+  FActionConfirm := true;
+  Result := FTimeOut;
+end;
+
+procedure TPart_OpenClose.OffAction;
+begin
+  SetPartAction( false );
+end;
+
+procedure TPart_OpenClose.OnAction;
+begin
+  SetPartAction( true );
+end;
+
+procedure TPart_OpenClose.SetDriver(driver: TComponent);
+begin
+  SetDriver_I7000( driver as TDriver_I7000 );
+end;
+
+procedure TPart_OpenClose.SetDriver_I7000(driver: TDriver_I7000);
+begin
+  FDriver := driver;
+end;
+
+procedure TPart_OpenClose.SetPartAction(cmdValue: boolean);
+var
+  bCmd: Boolean;
+begin
+  Inherited;
+  bCmd := cmdValue;
+  //TODO: 작성 완료 후 바꿀 것
+
+  //FDriver.SetBooleanValue( FParseInfo, bCmd );   //이건 아님
+
+  if cmdValue = true then
+  begin
+    FDriver.SetBooleanValue( FParseInfoSetClose, false );
+    FDriver.SetBooleanValue( FParseInfoSetOpen, true );
+  end
+  else
+  begin
+    FDriver.SetBooleanValue( FParseInfoSetOpen, false );
+    FDriver.SetBooleanValue( FParseInfoSetClose, true );
+  end;
+  FState := bCmd;
+end;
+
+procedure TAbsPart.SetName(const Value: string);
+begin
+  FName := Value;
+end;
+
+procedure TAbsPart.SetPartAction(cmdValue: Boolean);
+begin
+  FActionValue := cmdValue;
+  FTimeOutCount := 0;
+  FTimeOut := false;
+  FActionConfirm := false;
+end;
+
+end.
